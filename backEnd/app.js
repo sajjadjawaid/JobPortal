@@ -1,30 +1,26 @@
-var createError = require("http-errors");
-var express = require("express");
+const express = require("express");
+const app = express();
 
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+const dotenv = require("dotenv");
+dotenv.config();
 
-var app = express();
-
-app.use(logger("dev"));
+const connectDB = require("./dbConnection");
+const cors = require("cors");
+connectDB();
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+const corsOptions = {
+  origin: "http://localhost:4200", // Replace with your frontend's URL
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Allow credentials (cookies) to be sent
+};
+app.use(cors(corsOptions));
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
+const port = process.env.PORT;
+const { readdirSync } = require("fs");
+readdirSync("./Router").map((route) => {
+  app.use("/api", require(`./Router/${route}`));
 });
-
-// error handler
-app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render("error");
+app.listen(port, () => {
+  console.log(`"server  is listening on a ${port}`);
 });
-
-module.exports = app;
